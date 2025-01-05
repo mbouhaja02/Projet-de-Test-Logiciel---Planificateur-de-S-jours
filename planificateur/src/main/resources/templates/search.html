@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Recherche de Transport</title>
+</head>
+<body>
+
+<h1>Recherche de Transports</h1>
+
+<form th:action="@{/search}" method="post">
+    <label for="cityFrom">Ville de départ :</label>
+    <input type="text" id="cityFrom" name="cityFrom" placeholder="Paris" required />
+
+    <br/><br/>
+
+    <label for="cityTo">Ville d'arrivée :</label>
+    <input type="text" id="cityTo" name="cityTo" placeholder="Lyon" required />
+
+    <br/><br/>
+
+    <label for="departureMin">Date/Heure départ min :</label>
+    <input type="datetime-local" id="departureMin" name="departureMin" required />
+
+    <br/><br/>
+
+    <label for="departureMax">Date/Heure départ max :</label>
+    <input type="datetime-local" id="departureMax" name="departureMax" required />
+
+    <br/><br/>
+
+    <label for="mode">Mode de transport :</label>
+    <select id="mode" name="mode">
+        <option value="">(sans préférence)</option>
+        <option value="TRAIN">TRAIN</option>
+        <option value="AVION">AVION</option>
+    </select>
+
+    <br/><br/>
+
+    <label for="sort">Trier par :</label>
+    <select id="sort" name="sort">
+        <option value="">(aucun tri)</option>
+        <option value="cheapest">Prix le moins cher</option>
+        <option value="shortest">Durée la plus courte</option>
+    </select>
+
+    <br/><br/>
+    <button type="submit">Rechercher</button>
+</form>
+
+<hr/>
+
+<h2>Résultats</h2>
+<div th:if="${results != null}">
+    <div th:if="${#lists.isEmpty(results)}">
+        Aucun transport trouvé.
+    </div>
+    <ul th:if="${!#lists.isEmpty(results)}">
+        <li th:each="t : ${results}">
+            <strong th:text="${t.cityFrom}"></strong>
+            →
+            <strong th:text="${t.cityTo}"></strong>
+            |
+            Départ : <span th:text="${t.departureDateTime}"></span>
+            |
+            Arrivée : <span th:text="${t.arrivalDateTime}"></span>
+            |
+            Mode : <span th:text="${t.mode}"></span>
+            |
+            Prix : <span th:text="${t.price}"></span> €
+        </li>
+    </ul>
+</div>
+
+</body>
+</html>
