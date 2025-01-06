@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Recherche de Forfait</title>
+</head>
+<body>
+    <h1>Recherche de Forfait</h1>
+    <form th:action="@{/forfait}" method="post">
+        <fieldset style="border:1px solid #333; padding:10px; margin-bottom:10px;">
+            <legend>Forfait global</legend>
+            <label>Ville départ: </label>
+            <input type="text" name="cityFrom" value="Paris" required />
+            <br/>
+            <label>Ville arrivée: </label>
+            <input type="text" name="cityTo" value="Lyon" required />
+            <br/>
+            <label>Date début: </label>
+            <input type="date" name="startDate" value="2025-07-01" required />
+            <br/>
+            <label>Durée (jours): </label>
+            <input type="number" name="durationInDays" value="4" required />
+            <br/>
+            <label>Budget max: </label>
+            <input type="number" step="0.1" name="maxBudget" value="500" required />
+        </fieldset>
+
+        <fieldset style="border:1px solid #333; padding:10px; margin-bottom:10px;">
+            <legend>Transport</legend>
+            <label>Mode: </label>
+            <select name="mode">
+                <option value="">(Sans préférence)</option>
+                <option value="TRAIN">TRAIN</option>
+                <option value="AVION">AVION</option>
+            </select>
+            <br/>
+            <label>Tri: </label>
+            <select name="transportSort">
+                <option value="">(Aucun)</option>
+                <option value="cheapest">Moins cher</option>
+                <option value="shortest">Plus court</option>
+            </select>
+        </fieldset>
+
+        <fieldset style="border:1px solid #333; padding:10px; margin-bottom:10px;">
+            <legend>Hôtel</legend>
+            <label>Min stars: </label>
+            <input type="number" name="minStars" value="0" />
+            <br/>
+            <label>Tri: </label>
+            <select name="hotelSort">
+                <option value="">(Aucun)</option>
+                <option value="cheapest">Moins cher</option>
+                <option value="maxstars">Plus d'étoiles</option>
+            </select>
+        </fieldset>
+
+        <fieldset style="border:1px solid #333; padding:10px; margin-bottom:10px;">
+            <legend>Activités</legend>
+            <label>Catégories (ctrl+click pour multiples) :</label>
+            <select name="categories" multiple>
+                <option value="sport">Sport</option>
+                <option value="exposition">Exposition</option>
+                <option value="musique">Musique</option>
+            </select>
+            <br/>
+            <label>Distance max (km) :</label>
+            <input type="number" step="0.1" name="maxDistance" placeholder="Ex: 5" />
+        </fieldset>
+
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <hr/>
+
+    <div th:if="${results != null}">
+        <h2>Résultats : </h2>
+        <div th:if="${#lists.isEmpty(results)}">
+            <p>Aucun forfait trouvé.</p>
+        </div>
+        <div th:if="${!#lists.isEmpty(results)}">
+            <p th:text="${results.size()} + ' forfait(s) trouvé(s).'"></p>
+            <ul>
+                <li th:each="f : ${results}">
+                    <p>
+                        <strong>Aller</strong>: 
+                        <span th:text="${f.aller.cityFrom}"></span> → 
+                        <span th:text="${f.aller.cityTo}"></span>
+                        [<span th:text="${f.aller.mode}"></span> -
+                         <span th:text="${f.aller.price}"></span> €]
+                        <br/>
+                        <strong>Retour</strong>: 
+                        <span th:text="${f.retour.cityFrom}"></span> → 
+                        <span th:text="${f.retour.cityTo}"></span>
+                        [<span th:text="${f.retour.mode}"></span> -
+                         <span th:text="${f.retour.price}"></span> €]
+                        <br/>
+                        <strong>Hôtel</strong>:
+                        <span th:text="${f.hotel.address}"></span> 
+                        (<span th:text="${f.hotel.stars}"></span>★) 
+                        @ 
+                        <span th:text="${f.hotel.pricePerNight}"></span> €/nuit
+                        <br/>
+                        <strong>Activités</strong>: 
+                        <ul>
+                            <li th:each="a : ${f.activities}">
+                                <span th:text="${a.dateTime}"></span> - 
+                                <span th:text="${a.category}"></span> 
+                                (<span th:text="${a.address}"></span>) 
+                                [<span th:text="${a.price}"></span> €]
+                            </li>
+                        </ul>
+                        <strong>Total</strong>: <span th:text="${f.totalPrice}"></span> € 
+                    </p>
+                    <p th:if="${!#lists.isEmpty(f.errors)}">Erreurs: 
+                        <span th:each="err : ${f.errors}">
+                            <span th:text="${err}"></span><br/>
+                        </span>
+                    </p>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
