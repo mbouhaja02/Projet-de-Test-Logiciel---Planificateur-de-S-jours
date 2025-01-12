@@ -81,7 +81,7 @@ public class ForfaitServiceImpl implements ForfaitService {
                     List<Activity> filteredActivities = new ArrayList<>();
                     for (Activity act : allActivities) {
                         double distance = 0.0;
-                        if (criteria.getActivityCriteria().getMaxDistance() != null) {
+                        if (criteria.getActivityCriteria() != null && criteria.getActivityCriteria().getMaxDistance() != null) {
                             try {
                                 GeocodingService.Coordinates hotelCoords =
                                     geocodingService.geocodeAddress(hotel.getAddress());

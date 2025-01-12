@@ -120,4 +120,69 @@ class TransportServiceImplTest {
         assertEquals(2, result.get(0).getArrivalDateTime().getHour() - result.get(0).getDepartureDateTime().getHour());
         assertEquals(3, result.get(1).getArrivalDateTime().getHour() - result.get(1).getDepartureDateTime().getHour());
     }
+
+    @Test
+    void testMultiStepJourneyConsistency() {
+        // Arrange
+        TransportRepository mockRepository = mock(TransportRepository.class);
+        TransportService transportService = new TransportServiceImpl(mockRepository);
+
+        List<Transport> transports = Arrays.asList(
+                new Transport("Bordeaux", "Paris", LocalDateTime.of(2025, 1, 15, 9, 0),
+                        LocalDateTime.of(2025, 1, 15, 12, 0), ModeTransport.TRAIN, 80.0),
+                new Transport("Paris", "Rennes", LocalDateTime.of(2025, 1, 15, 13, 0),
+                        LocalDateTime.of(2025, 1, 15, 15, 0), ModeTransport.TRAIN, 60.0),
+                new Transport("Bordeaux", "Lyon", LocalDateTime.of(2025, 1, 15, 9, 0),
+                        LocalDateTime.of(2025, 1, 15, 11, 0), ModeTransport.TRAIN, 70.0)
+        );
+        when(mockRepository.findAll()).thenReturn(transports);
+
+        TransportCriteria criteria = new TransportCriteria(ModeTransport.TRAIN, false, false);
+        LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 8, 0);
+        LocalDateTime departureMax = LocalDateTime.of(2025, 1, 15, 18, 0);
+
+        // Act
+        List<Transport> result = transportService.findTransports(criteria, "Bordeaux", "Rennes", departureMin, departureMax);
+
+        // Assert
+        assertEquals(2, result.size(), "Le voyage devrait comporter deux étapes");
+        assertEquals("Bordeaux", result.get(0).getCityFrom(), "La première étape devrait partir de Bordeaux");
+        assertEquals("Paris", result.get(0).getCityTo(), "La première étape devrait arriver à Paris");
+        assertEquals("Paris", result.get(1).getCityFrom(), "La deuxième étape devrait partir de Paris");
+        assertEquals("Rennes", result.get(1).getCityTo(), "La deuxième étape devrait arriver à Rennes");
+    }
+
+    @Test
+    void testHomogeneousTransportModeForJourney() {
+        // Arrange
+        TransportRepository mockRepository = mock(TransportRepository.class);
+        TransportService transportService = new TransportServiceImpl(mockRepository);
+
+        List<Transport> transports = Arrays.asList(
+                new Transport("Paris", "Lyon", LocalDateTime.of(2025, 1, 15, 9, 0),
+                        LocalDateTime.of(2025, 1, 15, 11, 0), ModeTransport.TRAIN, 50.0),
+                new Transport("Lyon", "Marseille", LocalDateTime.of(2025, 1, 15, 12, 0),
+                        LocalDateTime.of(2025, 1, 15, 14, 0), ModeTransport.TRAIN, 40.0),
+                new Transport("Lyon", "Marseille", LocalDateTime.of(2025, 1, 15, 11, 30),
+                        LocalDateTime.of(2025, 1, 15, 12, 30), ModeTransport.AVION, 80.0)
+        );
+        when(mockRepository.findAll()).thenReturn(transports);
+
+        TransportCriteria criteria = new TransportCriteria(ModeTransport.TRAIN, false, false);
+        LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 8, 0);
+        LocalDateTime departureMax = LocalDateTime.of(2025, 1, 15, 18, 0);
+
+        // Act
+        List<Transport> result = transportService.findTransports(criteria, "Paris", "Marseille", departureMin, departureMax);
+
+        // Assert
+        assertEquals(2, result.size(), "Le voyage devrait comporter deux étapes");
+        assertTrue(result.stream().allMatch(t -> t.getMode() == ModeTransport.TRAIN), "Tous les trajets devraient être en train");
+        assertEquals("Paris", result.get(0).getCityFrom(), "Le premier trajet devrait partir de Paris");
+        assertEquals("Lyon", result.get(0).getCityTo(), "Le premier trajet devrait arriver à Lyon");
+        assertEquals("Lyon", result.get(1).getCityFrom(), "Le second trajet devrait partir de Lyon");
+        assertEquals("Marseille", result.get(1).getCityTo(), "Le second trajet devrait arriver à Marseille");
+    }
+
+
 }
