@@ -54,49 +54,58 @@ public class TransportServiceImpl implements TransportService {
 
         return filtered;
     }*/
+    private Comparator<Transport> getTransportComparator() {
+        return Comparator.comparingDouble(Transport::getPrice)
+                .thenComparingLong(t -> Duration.between(t.getDepartureDateTime(), t.getArrivalDateTime()).toMinutes());
+    }
+
     @Override
     public List<Transport> findTransports(TransportCriteria criteria, String cityFrom, String cityTo, LocalDateTime departureMin, LocalDateTime departureMax) {
         List<Transport> all = transportRepository.findAll();
         List<Transport> result = new ArrayList<>();
 
-        // Find direct route
+        // Recherche des trajets directs
         List<Transport> direct = all.stream()
                 .filter(t -> t.getCityFrom().equalsIgnoreCase(cityFrom) && t.getCityTo().equalsIgnoreCase(cityTo))
                 .filter(t -> !t.getDepartureDateTime().isBefore(departureMin) && !t.getDepartureDateTime().isAfter(departureMax))
                 .filter(t -> criteria.getPreferredMode() == null || t.getMode() == criteria.getPreferredMode())
+                .sorted(getTransportComparator())
                 .collect(Collectors.toList());
 
         if (!direct.isEmpty()) {
             result.addAll(direct);
         } else {
-            // Find multi-step route
+            // Recherche des trajets en plusieurs étapes
             List<Transport> firstLeg = findLeg(all, cityFrom, departureMin, departureMax, criteria);
             if (!firstLeg.isEmpty()) {
-                Transport first = firstLeg.get(0);
-                List<Transport> secondLeg = findLeg(all, first.getCityTo(), first.getArrivalDateTime(), departureMax, criteria);
-                if (!secondLeg.isEmpty() && secondLeg.get(0).getCityTo().equalsIgnoreCase(cityTo)) {
-                    result.add(first);
-                    result.add(secondLeg.get(0));
+                for (Transport first : firstLeg) {
+                    List<Transport> secondLeg = findLeg(all, first.getCityTo(), first.getArrivalDateTime(), departureMax, criteria);
+                    for (Transport second : secondLeg) {
+                        if (second.getCityTo().equalsIgnoreCase(cityTo)) {
+                            result.add(first);
+                            result.add(second);
+                            return result; // Return the first valid multi-step journey found
+                        }
+                    }
                 }
             }
         }
 
-        // Apply sorting if necessary
-        if (criteria.isPrioritizeCheapest()) {
-            result.sort(Comparator.comparingDouble(Transport::getPrice));
-        } else if (criteria.isPrioritizeShortest()) {
-            result.sort(Comparator.comparingLong(t -> Duration.between(t.getDepartureDateTime(), t.getArrivalDateTime()).toMinutes()));
-        }
-
         return result;
     }
+
 
     private List<Transport> findLeg(List<Transport> all, String cityFrom, LocalDateTime departureMin, LocalDateTime departureMax, TransportCriteria criteria) {
         return all.stream()
                 .filter(t -> t.getCityFrom().equalsIgnoreCase(cityFrom))
                 .filter(t -> !t.getDepartureDateTime().isBefore(departureMin) && !t.getDepartureDateTime().isAfter(departureMax))
                 .filter(t -> criteria.getPreferredMode() == null || t.getMode() == criteria.getPreferredMode())
+                .sorted(Comparator.comparingDouble(Transport::getPrice)
+                        .thenComparingLong(t -> Duration.between(t.getDepartureDateTime(), t.getArrivalDateTime()).toMinutes())
+                        .thenComparing(Transport::getCityTo)) // Priorisation des segments par destination
                 .collect(Collectors.toList());
     }
+
+
 
 }
