@@ -35,6 +35,30 @@ class TransportServiceImplTest {
     }
 
     @Test
+    void findTransports_shouldReturnValidTransports() {
+        TransportCriteria criteria = new TransportCriteria();
+        criteria.setPreferredMode(ModeTransport.TRAIN);
+        criteria.setPrioritizeShortest(false);
+        criteria.setPrioritizeCheapest(true);
+
+        LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 0, 0);
+        LocalDateTime departureMax = LocalDateTime.of(2025, 1, 16, 0, 0);
+
+        List<Transport> transports = Arrays.asList(
+                new Transport("Paris", "Lyon", departureMin.plusHours(1), departureMin.plusHours(3), ModeTransport.TRAIN, 100),
+                new Transport("Paris", "Lyon", departureMin.plusHours(1), departureMin.plusHours(3), ModeTransport.TRAIN, 80)
+        );
+
+        when(transportRepository.findAll()).thenReturn(transports);
+
+        List<Transport> result = transportService.findTransports(criteria, "Paris", "Lyon", departureMin, departureMax);
+
+        assertEquals(2, result.size());
+        assertEquals("Paris", result.get(0).getCityFrom());
+        assertEquals("Lyon", result.get(0).getCityTo());
+    }
+
+    @Test
     void findTransports_shouldFilterByCity() {
         TransportCriteria criteria = new TransportCriteria();
         LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 0, 0);
@@ -130,7 +154,6 @@ class TransportServiceImplTest {
 
     @Test
     void testMultiStepJourneyConsistency() {
-        // Arrange
         TransportRepository mockRepository = mock(TransportRepository.class);
         TransportService transportService = new TransportServiceImpl(mockRepository);
 
@@ -148,10 +171,8 @@ class TransportServiceImplTest {
         LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 8, 0);
         LocalDateTime departureMax = LocalDateTime.of(2025, 1, 15, 18, 0);
 
-        // Act
         List<Transport> result = transportService.findTransports(criteria, "Bordeaux", "Rennes", departureMin, departureMax);
 
-        // Assert
         assertEquals(2, result.size(), "Le voyage devrait comporter deux étapes");
         assertEquals("Bordeaux", result.get(0).getCityFrom(), "La première étape devrait partir de Bordeaux");
         assertEquals("Paris", result.get(0).getCityTo(), "La première étape devrait arriver à Paris");
@@ -161,7 +182,6 @@ class TransportServiceImplTest {
 
     @Test
     void testHomogeneousTransportModeForJourney() {
-        // Arrange
         TransportRepository mockRepository = mock(TransportRepository.class);
         TransportService transportService = new TransportServiceImpl(mockRepository);
 
@@ -179,10 +199,8 @@ class TransportServiceImplTest {
         LocalDateTime departureMin = LocalDateTime.of(2025, 1, 15, 8, 0);
         LocalDateTime departureMax = LocalDateTime.of(2025, 1, 15, 18, 0);
 
-        // Act
         List<Transport> result = transportService.findTransports(criteria, "Paris", "Marseille", departureMin, departureMax);
 
-        // Assert
         assertEquals(2, result.size(), "Le voyage devrait comporter deux étapes");
         assertTrue(result.stream().allMatch(t -> t.getMode() == ModeTransport.TRAIN), "Tous les trajets devraient être en train");
         assertEquals("Paris", result.get(0).getCityFrom(), "Le premier trajet devrait partir de Paris");
@@ -221,6 +239,30 @@ class TransportServiceImplTest {
         assertEquals(short_trip, result.get(0));
         assertEquals(long_trip, result.get(1));
         assertEquals(3, Duration.between(result.get(0).getDepartureDateTime(), result.get(0).getArrivalDateTime()).toHours());
+    }
+
+    @Test
+    void setCityFrom_shouldUpdateCityFrom() {
+        Transport transport = new Transport("Paris", "Lyon",
+                LocalDateTime.of(2025, 1, 15, 9, 0),
+                LocalDateTime.of(2025, 1, 15, 11, 0),
+                ModeTransport.TRAIN, 100.0);
+
+        transport.setCityFrom("Marseille");
+
+        assertEquals("Marseille", transport.getCityFrom(), "The cityFrom should be updated to Marseille.");
+    }
+
+    @Test
+    void setCityTo_shouldUpdateCityTo() {
+        Transport transport = new Transport("Paris", "Lyon",
+                LocalDateTime.of(2025, 1, 15, 9, 0),
+                LocalDateTime.of(2025, 1, 15, 11, 0),
+                ModeTransport.TRAIN, 100.0);
+
+        transport.setCityTo("Nice");
+
+        assertEquals("Nice", transport.getCityTo(), "The cityTo should be updated to Nice.");
     }
 }
 

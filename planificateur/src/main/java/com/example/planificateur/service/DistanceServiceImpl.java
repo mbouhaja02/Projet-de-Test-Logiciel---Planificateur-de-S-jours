@@ -1,5 +1,6 @@
 package com.example.planificateur.service;
 
+import com.example.planificateur.service.model.Coordinates;
 import org.springframework.stereotype.Service;
 
 /**
@@ -11,7 +12,7 @@ public class DistanceServiceImpl implements DistanceService {
     private static final double EARTH_RADIUS_KM = 6371.0;
 
     @Override
-    public double computeDistance(GeocodingService.Coordinates c1, GeocodingService.Coordinates c2) {
+    public double computeDistance(Coordinates c1, Coordinates c2) {
         double lat1 = Math.toRadians(c1.getLatitude());
         double lon1 = Math.toRadians(c1.getLongitude());
         double lat2 = Math.toRadians(c2.getLatitude());

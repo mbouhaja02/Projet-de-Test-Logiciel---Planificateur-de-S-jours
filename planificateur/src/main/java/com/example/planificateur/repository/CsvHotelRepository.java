@@ -19,32 +19,44 @@ public class CsvHotelRepository implements HotelRepository {
     public List<Hotel> findAll() {
         List<Hotel> list = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(
-                Objects.requireNonNull(
-                    getClass().getResourceAsStream(csvPath),
-                    "Fichier CSV introuvable : " + csvPath
-                )
-            )
-        )) {
-            reader.readLine(); // ignorer header
+        try (BufferedReader reader = getBufferedReader()) {
+            reader.readLine(); // Ignore header
 
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] tokens = line.split(";");
-                if (tokens.length < 4) continue;
+                if (tokens.length < 4) continue; // Skip invalid lines
 
-                String address = tokens[0];
-                String city = tokens[1];
-                int stars = Integer.parseInt(tokens[2]);
-                double pricePerNight = Double.parseDouble(tokens[3]);
+                try {
+                    String address = tokens[0];
+                    String city = tokens[1];
+                    int stars = Integer.parseInt(tokens[2]);
+                    double pricePerNight = Double.parseDouble(tokens[3]);
 
-                list.add(new Hotel(address, city, stars, pricePerNight));
+                    // Validate stars
+                    if (stars < 0 || stars > 5) {
+                        System.err.println("Invalid stars value: " + stars + " in line: " + line);
+                        continue;
+                    }
+
+                    list.add(new Hotel(address, city, stars, pricePerNight));
+                } catch (NumberFormatException e) {
+                    // Log the error for invalid number formats
+                    System.err.println("Invalid line: " + line + " - " + e.getMessage());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return list;
+    }
+
+
+    // New method to allow mocking in tests
+    protected BufferedReader getBufferedReader() throws IOException {
+        return new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(getClass().getResourceAsStream(csvPath),
+                        "Fichier CSV introuvable : " + csvPath)));
     }
 }

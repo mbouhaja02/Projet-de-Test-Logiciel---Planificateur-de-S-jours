@@ -6,6 +6,7 @@ import com.example.planificateur.domain.ModeTransport;
  * Critères permettant de filtrer/ordonner les transports
  * (mode préféré, tri par prix, tri par durée).
  */
+
 public class TransportCriteria {
 
     private ModeTransport preferredMode;  // TRAIN, AVION, ou null si sans préférence
@@ -31,16 +32,8 @@ public class TransportCriteria {
         this.preferredMode = preferredMode;
     }
 
-    public boolean isPrioritizeCheapest() {
-        return prioritizeCheapest;
-    }
-
     public void setPrioritizeCheapest(boolean prioritizeCheapest) {
         this.prioritizeCheapest = prioritizeCheapest;
-    }
-
-    public boolean isPrioritizeShortest() {
-        return prioritizeShortest;
     }
 
     public void setPrioritizeShortest(boolean prioritizeShortest) {

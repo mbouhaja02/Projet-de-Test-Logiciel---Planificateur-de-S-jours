@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Implémentation simple : lit un fichier CSV dans resources/data/transports.csv
- */
 @Repository
 public class CsvTransportRepository implements TransportRepository {
 
@@ -26,37 +23,40 @@ public class CsvTransportRepository implements TransportRepository {
     @Override
     public List<Transport> findAll() {
         List<Transport> transports = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(
-                    Objects.requireNonNull(
-                        getClass().getResourceAsStream(CSV_RESOURCE_PATH),
-                        "Fichier CSV introuvable : " + CSV_RESOURCE_PATH
-                    )
-                )
-        )) {
-            // Sauter la première ligne si c'est un header :
+        try (BufferedReader reader = getBufferedReader()) {
+            // Skip the first line if it's a header:
             reader.readLine(); // cityFrom;cityTo;departureDateTime;arrivalDateTime;mode;price
 
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] tokens = line.split(";");
                 if (tokens.length < 6) {
-                    // Ligne invalide
                     continue;
                 }
-                String cityFrom = tokens[0];
-                String cityTo   = tokens[1];
-                LocalDateTime departure = LocalDateTime.parse(tokens[2], FORMATTER);
-                LocalDateTime arrival   = LocalDateTime.parse(tokens[3], FORMATTER);
-                ModeTransport mode      = ModeTransport.valueOf(tokens[4].toUpperCase());
-                double price            = Double.parseDouble(tokens[5]);
+                try {
+                    String cityFrom = tokens[0];
+                    String cityTo   = tokens[1];
+                    LocalDateTime departure = LocalDateTime.parse(tokens[2], FORMATTER);
+                    LocalDateTime arrival   = LocalDateTime.parse(tokens[3], FORMATTER);
+                    ModeTransport mode      = ModeTransport.valueOf(tokens[4].toUpperCase());
+                    double price            = Double.parseDouble(tokens[5]);
 
-                Transport t = new Transport(cityFrom, cityTo, departure, arrival, mode, price);
-                transports.add(t);
+                    Transport t = new Transport(cityFrom, cityTo, departure, arrival, mode, price);
+                    transports.add(t);
+                } catch (Exception e) {
+                    System.err.println("Invalid line: " + line + " - " + e.getMessage());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return transports;
+    }
+
+    // New method to allow mocking in tests
+    protected BufferedReader getBufferedReader() throws IOException {
+        return new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(getClass().getResourceAsStream(CSV_RESOURCE_PATH),
+                        "Fichier CSV introuvable : " + CSV_RESOURCE_PATH)));
     }
 }

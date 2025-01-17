@@ -21,39 +21,6 @@ public class TransportServiceImpl implements TransportService {
     public TransportServiceImpl(TransportRepository transportRepository) {
         this.transportRepository = transportRepository;
     }
-
-    /*@Override
-    public List<Transport> findTransports(TransportCriteria criteria,
-                                          String cityFrom,
-                                          String cityTo,
-                                          LocalDateTime departureMin,
-                                          LocalDateTime departureMax) {
-
-        List<Transport> all = transportRepository.findAll();
-
-        // Filtrage
-        List<Transport> filtered = all.stream()
-            .filter(t -> t.getCityFrom().equalsIgnoreCase(cityFrom))
-            .filter(t -> t.getCityTo().equalsIgnoreCase(cityTo))
-            .filter(t -> !t.getDepartureDateTime().isBefore(departureMin))
-            .filter(t -> !t.getDepartureDateTime().isAfter(departureMax))
-            .filter(t -> criteria.getPreferredMode() == null 
-                     || t.getMode() == criteria.getPreferredMode())
-            .collect(Collectors.toList());
-
-        // Tri
-        if (criteria.isPrioritizeCheapest()) {
-            filtered.sort(Comparator.comparingDouble(Transport::getPrice));
-        } else if (criteria.isPrioritizeShortest()) {
-            filtered.sort((t1, t2) -> {
-                long d1 = Duration.between(t1.getDepartureDateTime(), t1.getArrivalDateTime()).toMinutes();
-                long d2 = Duration.between(t2.getDepartureDateTime(), t2.getArrivalDateTime()).toMinutes();
-                return Long.compare(d1, d2);
-            });
-        }
-
-        return filtered;
-    }*/
     private Comparator<Transport> getTransportComparator() {
         return Comparator.comparingDouble(Transport::getPrice)
                 .thenComparingLong(t -> Duration.between(t.getDepartureDateTime(), t.getArrivalDateTime()).toMinutes());
@@ -105,7 +72,5 @@ public class TransportServiceImpl implements TransportService {
                         .thenComparing(Transport::getCityTo)) // Priorisation des segments par destination
                 .collect(Collectors.toList());
     }
-
-
 
 }

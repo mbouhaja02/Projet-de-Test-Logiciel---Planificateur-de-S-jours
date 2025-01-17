@@ -34,13 +34,14 @@ class ForfaitServiceImplTest {
 
     @Test
     void createForfaits_shouldReturnValidForfaits() {
-        // Arrange
         ForfaitCriteria criteria = new ForfaitCriteria();
         criteria.setCityFrom("Paris");
         criteria.setCityTo("Lyon");
         criteria.setStartDate(LocalDate.of(2025, 1, 15));
         criteria.setDurationInDays(3);
         criteria.setMaxBudget(1000);
+        criteria.setHotelCriteria(new HotelCriteria());
+        criteria.setTransportCriteria(new TransportCriteria());
         criteria.setActivityCriteria(new ActivityCriteria());
 
         Transport aller = new Transport("Paris", "Lyon", LocalDateTime.of(2025, 1, 15, 10, 0), LocalDateTime.of(2025, 1, 15, 12, 0), ModeTransport.TRAIN, 100);
@@ -53,10 +54,8 @@ class ForfaitServiceImplTest {
         when(hotelService.findHotels(any(), eq("Lyon"), any(), any())).thenReturn(Arrays.asList(hotel));
         when(activityService.findActivities(any(), eq("Lyon"), any(), any())).thenReturn(Arrays.asList(activity));
 
-        // Act
         List<Forfait> result = forfaitService.createForfaits(criteria);
 
-        // Assert
         assertEquals(1, result.size());
         Forfait forfait = result.get(0);
         assertEquals(aller, forfait.getAller());
@@ -64,18 +63,19 @@ class ForfaitServiceImplTest {
         assertEquals(hotel, forfait.getHotel());
         assertEquals(1, forfait.getActivities().size());
         assertEquals(activity, forfait.getActivities().get(0));
-        assertEquals(550, forfait.getTotalPrice()); // 100 + 100 + (100 * 3) + 50
+        assertEquals(550, forfait.getTotalPrice());
     }
 
     @Test
     void createForfaits_shouldRespectMaxBudget() {
-        // Arrange
         ForfaitCriteria criteria = new ForfaitCriteria();
         criteria.setCityFrom("Paris");
         criteria.setCityTo("Lyon");
         criteria.setStartDate(LocalDate.of(2025, 1, 15));
         criteria.setDurationInDays(3);
         criteria.setMaxBudget(500);
+        criteria.setHotelCriteria(new HotelCriteria());
+        criteria.setTransportCriteria(new TransportCriteria());
         criteria.setActivityCriteria(new ActivityCriteria());
 
         Transport aller = new Transport("Paris", "Lyon", LocalDateTime.of(2025, 1, 15, 10, 0), LocalDateTime.of(2025, 1, 15, 12, 0), ModeTransport.TRAIN, 100);
@@ -88,22 +88,21 @@ class ForfaitServiceImplTest {
         when(hotelService.findHotels(any(), eq("Lyon"), any(), any())).thenReturn(Arrays.asList(hotel));
         when(activityService.findActivities(any(), eq("Lyon"), any(), any())).thenReturn(Arrays.asList(activity));
 
-        // Act
         List<Forfait> result = forfaitService.createForfaits(criteria);
 
-        // Assert
         assertTrue(result.isEmpty());
     }
 
     @Test
     void createForfait_shouldMaximizeActivitiesWithinBudget() {
-        // Arrange
         ForfaitCriteria criteria = new ForfaitCriteria();
         criteria.setCityFrom("Paris");
         criteria.setCityTo("Lyon");
         criteria.setStartDate(LocalDate.of(2025, 1, 20));
         criteria.setDurationInDays(3);
         criteria.setMaxBudget(1000);
+        criteria.setHotelCriteria(new HotelCriteria());
+        criteria.setTransportCriteria(new TransportCriteria());
         criteria.setActivityCriteria(new ActivityCriteria()); // Add this line
 
         Transport aller = new Transport("Paris", "Lyon", LocalDateTime.of(2025, 1, 20, 9, 0),
@@ -123,10 +122,8 @@ class ForfaitServiceImplTest {
         when(hotelService.findHotels(any(), eq("Lyon"), any(), any())).thenReturn(List.of(hotel));
         when(activityService.findActivities(any(), eq("Lyon"), any(), any())).thenReturn(activities);
 
-        // Act
         List<Forfait> result = forfaitService.createForfaits(criteria);
 
-        // Assert
         assertFalse(result.isEmpty());
         Forfait forfait = result.get(0);
         assertEquals(4, forfait.getActivities().size());

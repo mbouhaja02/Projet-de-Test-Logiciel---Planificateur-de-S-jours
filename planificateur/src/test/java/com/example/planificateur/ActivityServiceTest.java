@@ -33,7 +33,6 @@ class ActivityServiceImplTest {
 
     @Test
     void findActivities_shouldFilterByCity() {
-        // Arrange
         ActivityCriteria criteria = new ActivityCriteria();
         LocalDate startDate = LocalDate.of(2025, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 1, 10);
@@ -43,17 +42,14 @@ class ActivityServiceImplTest {
         );
         when(activityRepository.findAll()).thenReturn(activities);
 
-        // Act
         List<Activity> result = activityService.findActivities(criteria, "Paris", startDate, endDate);
 
-        // Assert
         assertEquals(1, result.size());
         assertEquals("123 Main St", result.get(0).getAddress());
     }
 
     @Test
     void findActivities_shouldFilterByDate() {
-        // Arrange
         ActivityCriteria criteria = new ActivityCriteria();
         LocalDate startDate = LocalDate.of(2025, 1, 5);
         LocalDate endDate = LocalDate.of(2025, 1, 7);
@@ -64,17 +60,14 @@ class ActivityServiceImplTest {
         );
         when(activityRepository.findAll()).thenReturn(activities);
 
-        // Act
         List<Activity> result = activityService.findActivities(criteria, "Paris", startDate, endDate);
 
-        // Assert
         assertEquals(1, result.size());
         assertEquals("456 Elm St", result.get(0).getAddress());
     }
 
     @Test
     void findActivities_shouldFilterByCategory() {
-        // Arrange
         ActivityCriteria criteria = new ActivityCriteria();
         criteria.setCategories(Arrays.asList("sport", "musique"));
         LocalDate startDate = LocalDate.of(2025, 1, 1);
@@ -86,10 +79,8 @@ class ActivityServiceImplTest {
         );
         when(activityRepository.findAll()).thenReturn(activities);
 
-        // Act
         List<Activity> result = activityService.findActivities(criteria, "Paris", startDate, endDate);
 
-        // Assert
         assertEquals(2, result.size());
         assertTrue(result.stream().anyMatch(a -> a.getCategory().equals("sport")));
         assertTrue(result.stream().anyMatch(a -> a.getCategory().equals("musique")));
@@ -97,7 +88,6 @@ class ActivityServiceImplTest {
 
     @Test
     void findActivities_shouldReturnEmptyListWhenNoCriteriaMatch() {
-        // Arrange
         ActivityCriteria criteria = new ActivityCriteria();
         criteria.setCategories(Collections.singletonList("cinema"));
         LocalDate startDate = LocalDate.of(2025, 1, 1);
@@ -108,16 +98,13 @@ class ActivityServiceImplTest {
         );
         when(activityRepository.findAll()).thenReturn(activities);
 
-        // Act
         List<Activity> result = activityService.findActivities(criteria, "Paris", startDate, endDate);
 
-        // Assert
         assertTrue(result.isEmpty());
     }
 
     @Test
     void userCannotAttendTwoActivitiesOnSameDate() {
-        // Arrange
         ActivityCriteria criteria = new ActivityCriteria();
         LocalDate startDate = LocalDate.of(2025, 1, 15);
         LocalDate endDate = LocalDate.of(2025, 1, 20);
@@ -128,10 +115,8 @@ class ActivityServiceImplTest {
         );
         when(activityRepository.findAll()).thenReturn(activities);
 
-        // Act
         List<Activity> result = activityService.findActivities(criteria, "Paris", startDate, endDate);
 
-        // Assert
         assertEquals(2, result.size());
         assertNotEquals(result.get(0).getDateTime().toLocalDate(), result.get(1).getDateTime().toLocalDate());
     }

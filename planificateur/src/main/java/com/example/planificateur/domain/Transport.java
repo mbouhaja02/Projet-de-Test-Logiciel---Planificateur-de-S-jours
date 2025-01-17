@@ -14,9 +14,6 @@ public class Transport {
     private ModeTransport mode;
     private double price;
 
-    public Transport() {
-    }
-
     public Transport(String cityFrom, String cityTo,
                      LocalDateTime departureDateTime,
                      LocalDateTime arrivalDateTime,
@@ -50,31 +47,16 @@ public class Transport {
         return departureDateTime;
     }
 
-    public void setDepartureDateTime(LocalDateTime departureDateTime) {
-        this.departureDateTime = departureDateTime;
-    }
-
     public LocalDateTime getArrivalDateTime() {
         return arrivalDateTime;
-    }
-
-    public void setArrivalDateTime(LocalDateTime arrivalDateTime) {
-        this.arrivalDateTime = arrivalDateTime;
     }
 
     public ModeTransport getMode() {
         return mode;
     }
 
-    public void setMode(ModeTransport mode) {
-        this.mode = mode;
-    }
-
     public double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
 }

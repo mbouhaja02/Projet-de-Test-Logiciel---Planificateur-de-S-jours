@@ -21,27 +21,6 @@ public class ActivityServiceImpl implements ActivityService {
         this.activityRepository = activityRepository;
     }
 
-    /*@Override
-    public List<Activity> findActivities(ActivityCriteria criteria,
-                                         String city,
-                                         LocalDate startDate,
-                                         LocalDate endDate) {
-        List<Activity> all = activityRepository.findAll();
-
-        return all.stream()
-            // Filtrer sur la ville
-            .filter(a -> a.getCity().equalsIgnoreCase(city))
-            // Filtrer sur la date: a.getDateTime() doit être entre startDate et endDate
-            .filter(a -> {
-                LocalDate d = a.getDateTime().toLocalDate();
-                return !d.isBefore(startDate) && !d.isAfter(endDate);
-            })
-            // Filtrer sur les catégories (si la liste n'est pas vide)
-            .filter(a -> criteria.getCategories().isEmpty()
-                      || criteria.getCategories().contains(a.getCategory().toLowerCase()))
-            // la distance sera gérée plus tard via geocoding/distance
-            .collect(Collectors.toList());
-    }*/
     @Override
     public List<Activity> findActivities(ActivityCriteria criteria, String city, LocalDate startDate, LocalDate endDate) {
         List<Activity> filteredActivities = activityRepository.findAll().stream()

@@ -55,11 +55,4 @@ public class Forfait {
         this.totalPrice = totalPrice;
     }
 
-    public List<String> getErrors() {
-        return errors;
-    }
-    
-    public void addError(String error) {
-        this.errors.add(error);
-    }
 }

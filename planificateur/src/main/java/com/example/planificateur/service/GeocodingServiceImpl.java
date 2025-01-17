@@ -1,38 +1,59 @@
 package com.example.planificateur.service;
 
-import org.json.JSONArray;
-import org.json.JSONException;
+import com.example.planificateur.service.model.Coordinates;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.net.URLEncoder;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Stub qui renvoie des coordonnées fictives. 
- * Dans la vraie vie, on appellerait un service de geocoding (ex: geocode.maps).
- */
 @Service
-/*public class GeocodingServiceStub implements GeocodingService {
-    @Override
-    public Coordinates geocodeAddress(String address) throws GeocodingException {
-        // On renvoie un point fictif en fonction du hash du string, juste pour la démo
-        int hash = Math.abs(address.hashCode());
-        double lat = (hash % 90) - 45;      // un lat "bidon"
-        double lon = (hash % 180) - 90;     // un lon "bidon"
-        return new Coordinates(lat, lon);
-    }
-}*/
 public class GeocodingServiceImpl implements GeocodingService {
+    private static final String BASE_URL = "https://geocode.maps.co/search";
+    protected final ObjectMapper objectMapper;
 
-    private static final String API_URL = "https://geocode.maps.co/search?q=";
+    @Value("${geocoding.api.key}")
+    private String apiKey;
+
+    public GeocodingServiceImpl() {
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public URL createUrl(String address) throws Exception {
+        String url = UriComponentsBuilder.fromHttpUrl(BASE_URL)
+                .queryParam("q", address)
+                .queryParam("api_key", apiKey)
+                .build()
+                .encode()
+                .toUriString();
+        return new URL(url);
+    }
+
+    public HttpURLConnection createConnection(URL url) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+        conn.setRequestProperty("Accept", "application/json");
+        return conn;
+    }
+
+    public String readResponse(HttpURLConnection conn) throws Exception {
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        }
+        return response.toString();
+    }
 
     @Override
     public Coordinates geocodeAddress(String address) throws GeocodingException {
@@ -40,38 +61,25 @@ public class GeocodingServiceImpl implements GeocodingService {
             throw new GeocodingException("Address cannot be null or empty");
         }
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
-            HttpGet request = new HttpGet(API_URL + encodedAddress);
+        try {
+            URL apiUrl = createUrl(address);
+            HttpURLConnection conn = createConnection(apiUrl);
+            String jsonResponse = readResponse(conn);
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode != 200) {
-                    throw new GeocodingException("API returned status code: " + statusCode);
-                }
+            JsonNode jsonArray = objectMapper.readTree(jsonResponse);
 
-                HttpEntity entity = response.getEntity();
-                if (entity == null) {
-                    throw new GeocodingException("Empty response from geocoding service");
-                }
+            /*if (jsonArray.isEmpty()) {
+                throw new GeocodingException("No results found for address: " + address);
+            }*/
 
-                String result = EntityUtils.toString(entity);
-                JSONArray jsonArray = new JSONArray(result);
+            JsonNode firstResult = jsonArray.get(0);
+            double lat = Double.parseDouble(firstResult.get("lat").asText());
+            double lon = Double.parseDouble(firstResult.get("lon").asText());
 
-                if (jsonArray.length() == 0) {
-                    throw new GeocodingException("No results found for address: " + address);
-                }
+            return new Coordinates(lat, lon);
 
-                JSONObject firstResult = jsonArray.getJSONObject(0);
-                double lat = firstResult.getDouble("lat");
-                double lon = firstResult.getDouble("lon");
-
-                return new Coordinates(lat, lon);
-            }
-        } catch (IOException e) {
-            throw new GeocodingException("Error while geocoding address: " + address);
-        } catch (JSONException e) {
-            throw new GeocodingException("Error parsing geocoding response for address: " + address);
+        } catch (Exception e) {
+            throw new GeocodingException("Error while geocoding address: " + address + ". Error: " + e.getMessage(), e);
         }
     }
 }
